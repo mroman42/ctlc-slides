@@ -1,0 +1,6 @@
+slides-blx.bib
+*.bbl
+_minted-slides/*
+ltximg/*
+*.log
+*.tex
