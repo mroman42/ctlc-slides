@@ -2,8 +2,15 @@
 #+Author: Mario Román García
 #+beamer_header: \institute{Grado en Ingeniería Informática y Matemáticas - Universidad de Granada} 
 
+  # Width: 1124
+  # Height: 874
+  # Depth: 32
+  # Visual: 0x160
+  # Corners:  +587+957  -2129+957  -2129-329  +587-329
+  # -geometry 80x25+579+949
+
 * Header                                                                                    :ignore:
-#+Options: H:2
+#+Options: H:2 toc:nil tasks:nil
 #+Language: es
 
 *** Beamer                                                                                :ignore:
@@ -12,6 +19,7 @@
 #+latex_cmd: xelatex
 #+latex_header: \usepackage[spanish]{babel}
 #+beamer_theme: metropolis [background=light,sectionpage=none,numbering=none,progressbar=none,block=fill]
+#+beamer_header: \usepackage{textpos}
 
 *** Show notes on second screen                                                           :ignore:
 #+beamer_header: \usepackage{pgfpages}
@@ -69,12 +77,17 @@
 #+latex_header: \definecolor{bluePRL}{HTML}{07608f}
 #+latex_header: \definecolor{greenPRL}{HTML}{078f60}
 
+#+latex_header: \newcommand{\white}[1]{{\textcolor{white}{#1}}}
+
 #+latex_header: \colorlet{myred}{redPRL}
 #+latex_header: \colorlet{myblue}{bluePRL}
 #+latex_header: \newcommand{\red}[1]{{\color{myred}{{#1}}}}
 #+latex_header: \newcommand{\blue}[1]{{\color{myblue}{{#1}}}}
 #+latex_header: \newcommand{\ctypes}[1]{\color{bluePRL}{#1}}
 #+latex_header: \newcommand{\cterms}[1]{\color{redPRL}{\texttt{#1}}}
+*** Proof trees                                                                           :ignore:
+#+latex_header: \usepackage{bussproofs}
+#+latex_header: \EnableBpAbbreviations{}
 *** Minted                                                                                :ignore:
 #+latex_header_extra: \usepackage{minted} \usemintedstyle{colorful}
 #+latex_header_extra: \setminted{fontsize=\small}
@@ -82,14 +95,22 @@
 #+latex_header_extra: \renewcommand{\theFancyVerbLine}{\sffamily\textcolor[rgb]{0.5,0.5,1.0}{\oldstylenums{\arabic{FancyVerbLine}}}}
 *** Multimedia                                                                            :ignore:
 #+beamer_header: \usepackage{multimedia}
-* Cálculo lambda
+*** Macros                                                                                :ignore:
+#+latex_header: \usepackage{amssymb} \usepackage{mathtools} \usepackage{amsmath}
+#+latex_header: \usepackage{bbm} \usepackage{stmaryrd}
+#+latex_header: \DeclarePairedDelimiter\pair{\langle}{\rangle} % Pair notation
+#+latex_header: \DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+#+latex_header: \DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+#+latex_header: \DeclarePairedDelimiter\intr{\llbracket}{\rrbracket} % Interpretation brackets
+
+* Cálculo lambda no tipado
 ** Cálculo lambda: definición
 :PROPERTIES:
 :BEAMER_OPT: fragile
 :END:
 footfullcite:church32 footfullcite:barendregt84
 
-El cálculo lambda es un sistema formal dado por ecuaciones sobre
+El *cálculo lambda* es un sistema formal dado por ecuaciones sobre
 /términos lambda/. Abstracción y aplicación son
 nociones primitivas.
 \[\mathsf{Expr} := \left\{\begin{array}{ll} 
@@ -104,9 +125,11 @@ Consideramos
  - \beta-reducciones, aplicación de funciones $(\lambda x. M)\ N \longrightarrow_{\beta} M_{[N/x]}$;
  - \eta-reducciones, extensionalidad $(\lambda x.f\ x) \equiv f$.
 
+\note[item]{El cálculo lambda intenta capturar la noción de funciones como fórmulas en abstracción y aplicación.}
 \note[item]{Las variables son intercambiables.}
-\note[item]{Aplicamos funciones sustituyendo.}
-\note[item]{Y reducimos términos que sólo hacen una aplicación.}
+\note[item]{La aplicación es mediante sustitución.}
+\note[item]{La abstracción y aplicación son duales.}
+
 ** Cálculo lambda: lenguaje de programación
 :PROPERTIES:
 :BEAMER_OPT: fragile
@@ -145,7 +168,7 @@ Hay expresiones que se reducirán o no dependiendo del orden de
 evaluación, como
 $(\lambda x.\lambda y.y)\ \Omega\ (\lambda x.x)$.
 
-#+ATTR_LATEX: :options [Evaluación a izquierda]
+#+ATTR_LATEX: :options [Barendregt]
 #+BEGIN_theorem
 Si existe una forma normal del término lambda, la estrategia que
 reduce a cada paso la aplicación más a la izquierda la encuentra.
@@ -160,9 +183,11 @@ La reducción da una forma de cálculo *Turing-completa*.
 
 footfullcite:leijen2001 footfullcite:debruijn81
 
-Usamos Haskell para escribir un intérprete de cálculo lambda. Los
+\note[item]{Decisiones de diseño que facilitan la manipulación simbólica.}
+
+Usamos *Haskell* para escribir un intérprete de cálculo lambda. Los
 algoritmos inductivos y puros se traducen directamente. Usamos
-la librería de combinadores monádicos ~parsec~.
+la librería de combinadores monádicos ~parsec~. \pause
 #+beamer: \\[-20pt]
 #+BEGIN_SRC haskell
 -- | Substitutes an index for a lambda expression
@@ -175,7 +200,7 @@ subs n p (Var m)
   | otherwise = Var m     -- An unrelated variable remains untouched
 #+END_SRC
 
-Usamos *índices de DeBruijn*, una representación abstracta 
+Usamos *índices de De Bruijn*, una representación abstracta 
 interna del ámbito de una variable. La expresión,
 \[ \red{\lambda\tikzmark{2} y}.\ \tikzmark{3}y\ 
 (\blue{\lambda\tikzmark{1} z}.\ \tikzmark{0}y\ 
@@ -187,29 +212,643 @@ interna del ámbito de una variable. La expresión,
 \draw ([yshift=-1ex]pic cs:4) to ([yshift=-1ex]pic cs:1);
 \end{tikzpicture}\]
 se reescribe como $\red{\lambda}\ (1\ \blue{\lambda}\ (2\ 1))$.
-** Mikrokosmos: intérprete
-#+attr_latex: width=\textwidth
-[[../images/mikrosession_slide.png]]
 
-** Mikrokosmos: SKI
-* Mikrokosmos
-** Implementación
-** Interacción
-** Uso
-** Entorno de programación
-** Programando en el cálculo lambda sin tipos
-** Programando en el cálculo lambda simplemente tipado
-* Categorías cartesianas
-** Cálculo lambda con tipos
-** Categorías cartesianas
-** Isomorfismo de Curry-Howard
-** Argumentos diagonales
-* Conclusiones
-** Conclusiones
-*** Conclusiones
+** Mikrokosmos: intérprete
+
+#+latex: \begin{textblock*}{0cm}(-1cm,-4.90cm)
+#+latex: \includegraphics<1>[keepaspectratio=true,width=1\paperwidth]{./images/mikrokosmos0.png}
+#+latex: \includegraphics<2>[keepaspectratio=true,width=1\paperwidth]{./images/mikrokosmos1.png}
+#+latex: \includegraphics<3>[keepaspectratio=true,width=1\paperwidth]{./images/mikrokosmos2.png}
+#+latex: \includegraphics<4>[keepaspectratio=true,width=1\paperwidth]{./images/mikrokosmos3.png}
+#+latex: \includegraphics<5>[keepaspectratio=true,width=1\paperwidth]{./images/mikrokosmos4.png}
+#+latex: \includegraphics<6>[keepaspectratio=true,width=1\paperwidth]{./images/mikrokosmos5.png}
+#+latex: \end{textblock*}
+
+* Cálculo lambda tipado
+** Cálculo lambda tipado: reglas de tipado
 :PROPERTIES:
+:BEAMER_OPT: fragile
 :END:
-¡Muchas gracias!
+
+El cálculo lambda simplemente tipado consta de tres constructores de
+tipos: un tipo *unidad* con un solo elemento $1$, un *producto* para cada dos
+tipos, y el tipo *función* entre dos tipos cualquiera.
+#+beamer: \onslide<2->{
+Además, podemos añadir un tipo *vacío* $0$ y un tipo *unión* $A + B$.
+#+beamer: }
+\begin{prooftree}
+\AXC{}   
+\UIC{$\Gamma \vdash \red{\ast} : 1$}
+\AXC{$\Gamma \vdash \red{a} : {A}$}
+\AXC{$\Gamma \vdash \red{b} : {B}$}
+\BIC{$\Gamma \vdash \red{\pair{a,b}} : {A \times B}$}
+\AXC{$\Gamma \vdash \red{m} : {A \times B}$}
+\UIC{$\Gamma \vdash \red{\pi_1\ m} : {A}$}
+\AXC{$\Gamma \vdash \red{m} : {A \times B}$}
+\UIC{$\Gamma \vdash \red{\pi_2\ m} : {B}$}
+\noLine
+\QIC{}
+\end{prooftree}
+\begin{prooftree}
+\AXC{$\Gamma, \red{x}:{A} \vdash \red{m} : {B}$}
+\UIC{$\Gamma \vdash \red{\lambda x.m} : {A \to B}$}
+\AXC{$\Gamma \vdash \red{f} : {A \to B}$}
+\AXC{$\Gamma \vdash \red{a} : {A}$}
+\BIC{$\Gamma \vdash \red{f\ a} : {B}$}
+\noLine
+\BIC{}
+\end{prooftree}
+\pause
+\begin{prooftree}
+\AXC{$\Gamma \vdash \red{m} : {0}$}
+\UIC{$\Gamma \vdash \red{\mathrm{abort}_A\ m} : {A}$}
+\AXC{$\Gamma \vdash \red{a} : {A}$}
+\UIC{$\Gamma \vdash \red{\mathrm{inl}\ a} : {A + B}$}
+\AXC{$\Gamma \vdash \red{b} : {B}$}
+\UIC{$\Gamma \vdash \red{\mathrm{inr}\ b} : {A + B}$}
+\noLine
+\TIC{}
+\end{prooftree}
+\begin{prooftree}
+\AXC{$\Gamma \vdash \red{m} : {A + B}$}
+\AXC{$\Gamma, \red{a}:{A} \vdash \red{n} : {C}$}
+\AXC{$\Gamma, \red{b}:{B} \vdash \red{p} : {C}$}
+\TIC{$\Gamma \vdash (\red{\mathrm{case}\ m\ \mathrm{of}\ [a].n;\ [b].p}) : {C}$}
+\end{prooftree}
+\pause
+
+# No todo término es tipable, $\Omega = (\lambda x.xx)$ no lo es.
+
+#+ATTR_LATEX: :options [Tait, Girard]
+#+BEGIN_theorem
+Todo término tipado normaliza.
+#+END_theorem
+
+footfullcite:girard89
+
+** Cálculo lambda tipado: interpretación de Heyting-Kolmogorov
+Heyting y Kolmogorov describen las implicaciones de la lógica
+intuicionista $\blue{A \to B}$ como funciones que transforman
+demostraciones de $\blue{A}$ en transformaciones de $\blue{B}$. \pause
+Bajo esta interpretación el cálculo lambda es un sistema de
+demostraciones de la lógica proposicional intuicionista.
+\begin{prooftree}
+\AXC{}   
+\UIC{$\Gamma \vdash {\ast} : 1$}
+\AXC{$\Gamma \vdash {a} : \blue{A}$}
+\AXC{$\Gamma \vdash {b} : \blue{B}$}
+\BIC{$\Gamma \vdash {\pair{a,b}} : \blue{A \times B}$}
+\AXC{$\Gamma \vdash {m} : \blue{A \times B}$}
+\UIC{$\Gamma \vdash {\pi_1\ m} : \blue{A}$}
+\AXC{$\Gamma \vdash {m} : \blue{A \times B}$}
+\UIC{$\Gamma \vdash {\pi_2\ m} : \blue{B}$}
+\noLine
+\QIC{}
+\end{prooftree}
+#+latex: \vspace*{-1em}
+\begin{prooftree}
+\AXC{$\Gamma, {x}:\blue{A} \vdash {m} : \blue{B}$}
+\UIC{$\Gamma \vdash {\lambda x.m} : \blue{A \to B}$}
+\AXC{$\Gamma \vdash {f} : \blue{A \to B}$}
+\AXC{$\Gamma \vdash {a} : \blue{A}$}
+\BIC{$\Gamma \vdash {f\ a} : \blue{B}$}
+\noLine
+\BIC{}
+\end{prooftree}
+#+latex: \vspace*{-1em}
+\begin{prooftree}
+\AXC{$\Gamma \vdash {m} : \blue{0}$}
+\UIC{$\Gamma \vdash {\mathrm{abort}_A\ m} : \blue{A}$}
+\AXC{$\Gamma \vdash {a} : \blue{A}$}
+\UIC{$\Gamma \vdash {\mathrm{inl}\ a} : \blue{A + B}$}
+\AXC{$\Gamma \vdash {b} : \blue{B}$}
+\UIC{$\Gamma \vdash {\mathrm{inr}\ b} : \blue{A + B}$}
+\noLine
+\TIC{}
+\end{prooftree}
+#+latex: \vspace*{-1em}
+\begin{prooftree}
+\AXC{$\Gamma \vdash {m} : \blue{A + B}$}
+\AXC{$\Gamma, {a}:\blue{A} \vdash {n} : \blue{C}$}
+\AXC{$\Gamma, {b}:\blue{B} \vdash {p} : \blue{C}$}
+\TIC{$\Gamma \vdash ({\mathrm{case}\ m\ \mathrm{of}\ [a].n;\ [b].p}) : \blue{C}$}
+\end{prooftree}
+\pause
+#+ATTR_LATEX: :options [Curry, Howard]
+#+BEGIN_theorem
+Las proposiciones son tipos, las demostraciones sus elementos. Evaluar
+elementos equivale a simplificar demostraciones manteniendo su
+significado.
+#+END_theorem
+
+footfullcite:wadler15
+
+** TODO Mikrokosmos: inferencia y unificación
+# Algoritmos de Barendregt. Inferencia en cálculo lambda es P-complete
+# Curry-style types
+
+** Mikrokosmos: intérprete tipado
+
+\note[item]{Los programas son demostraciones.}
+
+#+latex: \begin{textblock*}{0cm}(-1cm,-3.90cm)
+#+latex: \includegraphics<1>[keepaspectratio=true,width=1\paperwidth]{./images/gentzen1.png}
+#+latex: \end{textblock*}
+
+** TODO Constructivismo: doble negación
+# Doble negación 
+
+\note[item]{Puede usarse Mikrokosmos como asistente de demostraciones.}
+
+* Categorías cartesianas
+** Categorías: adjunciones
+:PROPERTIES:
+:BEAMER_OPT: fragile
+:END:
+Una *adjunción* $F \dashv G$ entre categorías ${\cal C}$ y ${\cal D}$ es un par de funtores
+$F \colon {\cal C} \to {\cal D}$ y $G \colon {\cal D} \to {\cal C}$ con una biyección natural
+$\varphi \colon \hom(FX,Y) \cong \hom(X,GY)$.
+\begin{prooftree}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&] FX \rar{f}\& Y \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&] X \rar{\varphi{(f)}}\& GY \end{tikzcd}}
+\end{prooftree}
+
+\pause
+\note[item]{Las notaremos como inferencias lógicas bidireccionales.}
+
+*** Grupos                                                                                 :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.5
+:BEAMER_env: example
+:END:
+El funtor que crea grupos libres $F \colon \mathsf{Grp}\to \mathsf{Set}$, es /el/
+adjunto al funtor que a cada grupo le asigna su conjunto
+subyecente $\floor{-} \colon \mathsf{Set}\to \mathsf{Grp}$. El homomorfismo queda determinado
+por la elección de imágenes de los generadores.
+\begin{prooftree}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&] FA \rar{\phi}\& M \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&] A \rar{f}\& \floor{M} \end{tikzcd}}
+\end{prooftree}
+
+# Ejemplo: productos y coproductos
+# Ejemplo: grupos libres
+
+*** Productos y coproductos                                                                :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.5
+:BEAMER_env: example
+:END:
+
+Los productos y los coproductos pueden definirse sin hacer referencia
+a conjuntos como adjuntos $+ \dashv \Delta \dashv \times$ para $\Delta$ el funtor diagonal.
+
+#+beamer: \only<3>{
+\begin{prooftree}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&]
+X \to Y \& X \to Z \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&]
+X \rar\& Y \times Z \end{tikzcd}}
+\end{prooftree}
+\begin{prooftree}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&]
+X + Y \rar\& Z \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&]
+X \to Z \& Y \to Z \end{tikzcd}}
+\end{prooftree}
+#+beamer: }\only<2>{
+\begin{prooftree}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&]
+X, X \rar \& Y, Z \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&]
+X \rar\& Y \times Z \end{tikzcd}}
+\end{prooftree}
+\begin{prooftree}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&]
+X + Y \rar\& Z \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&]
+X,Y \rar\&  Z,Z \end{tikzcd}}
+\end{prooftree}
+#+beamer: }
+
+** Categorías cartesianas cerradas: definición
+Una *categoría cartesiana* ${\cal C}$ es aquella en la que el funtor
+terminal $\ast \colon {\cal C} \to 1$, el funtor diagonal $\Delta \colon {\cal C} \times {\cal C} \to {\cal C}$ y sus funtores
+producto $(- \times A) \colon {\cal C} \to {\cal C}$ tienen adjuntos derechos. Los llamamos
+*unidad*, *producto* y *exponencial*.
+#+latex: \vspace*{-1em}
+\begin{prooftree}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&] \ast \rar{}\& \ast \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&] C \rar{!}\& 1 \end{tikzcd}}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&] C,C \rar{f,g}\& A,B \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&] C \rar{\pair{f,g}}\& A \times B \end{tikzcd}}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&] C \times A \rar{f}\& B \end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&] C \rar{\widetilde{f}}\& B^A \end{tikzcd}}
+\noLine
+\TIC{}
+\end{prooftree}
+\pause
+
+\note[item]{En conjuntos, el conjunto de un elemento, producto cartesiano y funciones.}
+
+Si interpretamos los tipos y contextos como objetos y los elementos
+como morfismos, son las reglas para el cálculo lambda tipado.
+\begin{prooftree}
+\AXC{}   
+\UIC{$\Gamma \vdash {\ast} : 1$}
+\AXC{$\Gamma \vdash {a} : A$}
+\AXC{$\Gamma \vdash {b} : B$}
+\BIC{$\Gamma \vdash {\pair{a,b}} : A \times B$}
+\AXC{$\Gamma, {a} : A \vdash {b} : B$}  
+\UIC{$\Gamma \vdash {(\lambda a.b)} : A \to B$}
+\noLine
+\TIC{}
+\end{prooftree}
+
+#+ATTR_LATEX: :options [Lambek]
+#+BEGIN_theorem
+Hay una equivalencia entre categorías cartesianas cerradas y teorías
+sobre el cálculo lambda $\mathsf{CCC} \simeq \mathsf{\lambda Th}$.
+#+END_theorem
+
+\note[item]{El cálculo lambda es un lenguaje interno de las categorías cartesianas.}
+
+footfullcite:lambek88
+
+** Categorías cartesianas cerradas: argumentos diagonales
+\note[item]{Podemos usar el cálculo lambda para demostrar en categorías cartesianas.}
+#+ATTR_LATEX: :options [Lawvere]
+#+BEGIN_theorem
+En una categoría cartesiana cerrada, si existe un $d : A \to B^A$ sobreyectivo
+en puntos, cada $f : B \to B$ tiene un punto fijo $b : B$, tal que $f(b) = b$.
+#+END_theorem
+\textit{Demostración.} Por sobreyectividad, existe $d\ x = \lambda a.f(d\ a\ a)$. Entonces
+$d\ x\ x \equiv (\lambda a.f\ (d\ a\ a))\ x \equiv f\ (d\ x\ x)$ es un punto fijo. $\qed$
+\pause
+
+*** Left                                                                                   :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.5
+:END:
+
+**** Cantor
+:PROPERTIES:
+:BEAMER_env: example
+:END:
+Para todo $A$, el conjunto $2^A$ tiene mayor cardinalidad.
+
+**** Russell
+:PROPERTIES:
+:BEAMER_env: example
+:END:
+Tomar toda colección como conjunto lleva a inconsistencia.
+
+**** Combinador de punto fijo
+:PROPERTIES:
+:BEAMER_env: example
+:END:
+El cálculo lambda sin tipos puede verse como una teoría sobre el
+cálculo tipado. Todo combinador tiene un punto fijo.
+
+*** Right                                                                                  :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.5
+:END:
+
+**** Tarski, Gödel
+:PROPERTIES:
+:BEAMER_env: example
+:END:
+Una teoría consistente no puede expresar su propia verdad.
+Consideramos objetos $2,A^0,A^1,A^2,\dots$ y los morfismos entre
+ellos son expresiones de la teoría. La teoría es *consistente*
+si existe $\mathrm{not} \colon 2 \to 2$ sin puntos fijos. La *verdad* es expresable
+si existe $\mathrm{truth} : A \times A \to 2$ tal que para cada $\varphi \colon A \to 2$
+existe un $g : A$ *número de Gödel* tal que $\mathrm{truth}(g,a) = \varphi(a)$.
+
+** TODO Categorías cartesianas cerradas: extensiones
+** Categorías cartesianas cerradas: naturales
+:PROPERTIES:
+:BEAMER_OPT: fragile
+:END:
+Un *álgebra inicial* sobre un funtor viene dada por una construcción
+con la siguiente propiedad universal. Un ejemplo son los números
+naturales.
+\[\begin{tikzcd}
+FX \rar[dashed]{Fh}\dar{\mu} & FY\dar{\nu} & 1+\mathbb{N}\rar{} \dar[swap]{\pair{0,\mathrm{succ}}} &  1+X\dar{\pair{x,f}} \\
+X \rar[dashed]{h} & Y & \mathbb{N}\rar{\varphi} & X \\
+\end{tikzcd}\]
+Lo interesante es que así ganamos una forma de expresar los naturales
+y los principios de inducción. El cálculo lambda que se obtiene cuando
+añadimos los naturales se llama *System T* y fue desarrollado por Gödel.
+
+\[\begin{tikzcd}
+1+\mathbb{N}\rar{} \dar[swap]{\pair{0,\mathsf{succ}}} & 
+1+\hom(\mathbb{N},\mathbb{N}) \dar{\pair{\mathsf{id}, \mathsf{succ}\,\circ\, -}} \\
+\mathbb{N}\rar{+} &
+\hom(\mathbb{N},\mathbb{N})
+\end{tikzcd}\]
+
+Nos da $0+m = \id(m) = m$ y además $\mathrm{succ}(n) + m = (\mathrm{succ}\circ (n+\_))(m) = \mathrm{succ}(n+m)$.
+
+* Categorías localmente cartesinas
+** TODO Prehaces
+** Categorías localmente cartesianas cerradas: cuantificadores
+:PROPERTIES:
+:BEAMER_OPT: fragile
+:END:
+Los productos fibrados determinan *sustituciones*. Un caso particular
+es el *debilitamiento lógico*. Determina un funtor entre *sobrecategorías*.
+\[\begin{tikzcd}
+\left\{P(\pi(a,b)) \right\} \rar{} \dar[swap,hook]{} &
+\left\{P(a) \right\} \dar[hook]{} \\
+A \times B \rar{\pi} & A
+\end{tikzcd}\]
+
+Este debilitamiento tiene dos adjuntos en sobrecategorías, $\exists \dashv \pi \dashv \forall$, que son
+los cuantificadores lógicos.
+#+beamer: \only<1>{
+   \begin{prooftree}
+   \AXC{\begin{tikzcd}[fragile,ampersand replacement=\&, row sep=tiny]
+   \& A \times B \& \\
+   \left\{ P(\pi(a,b)) \right\} \urar \ar{rr} \&\& 
+   \left\{ Q(a,b) \right\} \ular
+   \end{tikzcd}}
+   \doubleLine
+   \UIC{\begin{tikzcd}[fragile,ampersand replacement=\&,row sep=tiny]
+   \left\{ P(a) \right\} \drar \ar{rr} \&\& 
+   \left\{ \forall b\in B, Q(a,b) \right\} \dlar
+   \\
+   \& A \&
+   \end{tikzcd}}
+   \end{prooftree}
+#+beamer: }\only<2>{
+   \begin{prooftree}
+   \AXC{\begin{tikzcd}[fragile,ampersand replacement=\&, row sep=tiny]
+   \& A \times B \& \\
+   \left\{ P(a,b) \right\} \urar \ar{rr} \&\& 
+   \left\{ Q(\pi(a,b)) \right\} \ular
+   \end{tikzcd}}
+   \doubleLine
+   \UIC{\begin{tikzcd}[fragile,ampersand replacement=\&,row sep=tiny]
+   \left\{ \exists b \in B \colon P(a) \right\} \drar \ar{rr} \&\& 
+   \left\{ Q(a) \right\} \dlar
+   \\
+   \& A \&
+   \end{tikzcd}}
+   \end{prooftree}
+#+beamer: }
+
+#+BEGIN_theorem
+Si existen los productos fibrados, la adjunción izquierda, *existe*,
+viene dada por composición con $\pi$. Si además existe la adjunción
+derecha, *para todo*, llamamos a la categoría *localmente cartesiana
+cerrada*.
+#+END_theorem
+
+** Categorías localmente cartesianas cerradas: sigma
+:PROPERTIES:
+:BEAMER_OPT: fragile
+:END:
+
+Vamos a construir $\exists$ en el cálculo lambda. Un tipo es un objeto de la
+sobrecategoría sobre un contexto, ${\cal C} / \intr{\Gamma}$. Sus elementos son morfismos
+desde el terminal de la sobrecategoría, $\mathrm{id} \colon \intr{\Gamma} \to \intr{\Gamma}$.
+\[\begin{tikzcd}
+\intr{\Gamma, a:A}\dar{\pi_A} \dar{\pi_{A}} & \intr{\Gamma}\rar{a}\drar[equal] & \intr{\Gamma, a:A}\dar{\pi_A} \\
+\intr{\Gamma}& & \intr{\Gamma}
+\end{tikzcd}\]
+
+Esta construcción es un *par dependiente* o *tipo Sigma*.
+
+\[\begin{tikzcd}
+\intr{\Gamma} \rar{b} \drar[equal] \ar[bend left]{rr}{\pair{a,b}} & 
+\intr{\Gamma,y : B(a)} \dar\rar &
+\intr{\Gamma,x:A,y:B} \dar{\pi_B} \ar[bend left=70]{dd}{\pi_{\Sigma}} \\
+& \intr{\Gamma} \rar{a}\drar[equal] & \intr{\Gamma, x : A} \dar{\pi_A} \\
+&& \intr{\Gamma}
+\end{tikzcd}\]
+
+** Categorías localmente cartesianas cerradas: pi
+:PROPERTIES:
+:BEAMER_OPT: fragile
+:END:
+
+La construcción del *cuantificador universal* son las *funciones
+dependientes* o *tipos Pi*. Es directa desde la adjunción suponiendo
+que estamos en una categoría localmente cartesiana cerrada.
+
+\begin{prooftree}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&,column sep=tiny,row sep=small] 
+\& \intr{\Gamma,A} \& \\ 
+\intr{\Gamma,A} \ar{rr}{b} \urar[bend left] \&\& 
+\intr{\Gamma,A,B} \ular[bend right]
+\end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&,column sep=tiny,row sep=small] 
+\intr{\Gamma} \ar{rr}{(\lambda a.b)} \drar[bend right] \&\& 
+\intr{\Gamma, \prod_{a:A}B} \dlar[bend left] \\ 
+\& \intr{\Gamma} \&
+\end{tikzcd}}
+\AXC{\begin{tikzcd}[fragile,ampersand replacement=\&,column sep=tiny,row sep=small] 
+\& \intr{\Gamma,A} \& \\
+\intr{\Gamma,A,\prod_{a:A}B} \ar{rr}{app} \urar[bend left] \&\& 
+\intr{\Gamma,A,B} \ular[bend right]
+\end{tikzcd}}
+\doubleLine
+\UIC{\begin{tikzcd}[fragile,ampersand replacement=\&,column sep=tiny,row sep=small] 
+\intr{\Gamma, \prod_{a:A}B} \ar{rr}{\mathrm{id}} \drar[bend right] \&\&
+\intr{\Gamma, \prod_{a:A}B} \dlar[bend left] \\ 
+\& \intr{\Gamma} \&
+\end{tikzcd}}
+\noLine
+\BIC{}
+\end{prooftree}
+
+Nótese cómo la imagen de la identidad bajo la adjunción es la
+aplicación de una función sobre un elemento.
+
+* Teoría de tipos
+** Teoría de tipos
+:PROPERTIES:
+:BEAMER_OPT: fragile
+:END:
+
+Obtenemos las siguientes reglas para un sistema de tipos dependiente.
+\begin{prooftree}
+\AXC{$\Gamma \vdash a : A$}
+\AXC{$\Gamma \vdash b : B[a/x]$}
+\BIC{$\Gamma \vdash \pair{a,b} : \sum_{x:A}B$}
+\AXC{$\Gamma \vdash m : \sum_{x:A} C$}
+\UIC{$\Gamma \vdash \mathsf{fst}(m) : A$}
+\AXC{$\Gamma \vdash m : \sum_{x:A} C$}
+\UIC{$\Gamma \vdash \mathsf{snd}(m) : C[\fst(m)/a]$}
+\noLine
+\TIC{}
+\end{prooftree}
+\begin{prooftree}
+\AXC{$\Gamma, a : A \vdash b : B$}
+\UIC{$\Gamma \vdash (\lambda a.b) : \prod_{a:A}B$}
+\AXC{$\Gamma \vdash a : A$}
+\AXC{$\Gamma \vdash f : \prod_{a:A}B$}
+\BIC{$\Gamma \vdash f\ a : B(a)$}
+\noLine
+\BIC{}
+\end{prooftree}
+Ejemplo: diferencia entre vectores y vectores uniformes.
+\[
+v : \sum_{n : {\mathbb{N}}} \mathrm{Vect}(n) 
+\quad\text{ y }\quad
+w : \prod_{n : \mathbb{N}} \mathrm{Vect}(n).
+\]
+
+** Teoría de tipos: Agda
+#+latex: \begin{textblock*}{0cm}(-1cm,-4.90cm)
+#+latex: \includegraphics[keepaspectratio=true,width=1\paperwidth]{./images/agda-sigma.png}
+#+latex: \end{textblock*}
+
+** Teoría de tipos: igualdad
+:PROPERTIES:
+:BEAMER_OPT: fragile
+:END:
+
+La *igualdad* será el tipo dado por la diagonal $\vartriangle \colon A \to A \times A$.
+La propiedad universal del producto fibrado nos da una equivalencia
+entre los siguientes diagramas con la diagonal.
+\[\begin{array}{lll}\begin{tikzcd}
+\phantom{f}\vartriangle^{\ast}\!\! C \rar\dar & C\dar{\pi} \\
+A\rar{\vartriangle}\uar[dashed,bend left]{\widetilde k} & A\times A
+\end{tikzcd} &\qquad& \begin{tikzcd}[column sep=tiny]
+A \drar[swap]{\vartriangle}\ar[dashed]{rr}{k} && C\dlar{\pi} \\
+& A\times A &
+\end{tikzcd}\end{array}\]
+Cuando lo interpretamos en tipos, a la izquierda tenemos un $x :A \vdash c : C(x,x)$
+y a la derecha tenemos $x:A,y:A,p:x=y \vdash c:C(x,y)$. Esto nos da
+una regla para usar la igualdad, que en teoría de tipos se llama *eliminador J*.
+\begin{prooftree}
+\AXC{$\Gamma \vdash a : A$}
+\noLine
+\UIC{$\Gamma, x : A \vdash c:C(x,x)$}
+\AXC{$\Gamma \vdash b : A$}
+\noLine
+\UIC{$\Gamma \vdash p : a = b$}
+\BIC{$\Gamma \vdash J_C(c,p) : C(a,b)$}
+\end{prooftree}
+
+footfullcite:lawvere70
+
+** Teoría de tipos: igualdad en Agda
+#+latex: \begin{textblock*}{0cm}(-1cm,-4.90cm)
+#+latex: \includegraphics[keepaspectratio=true,width=1\paperwidth]{./images/agda-eq.png}
+#+latex: \end{textblock*}
+
+** Teoría de tipos: proposiciones
+:PROPERTIES:
+:BEAMER_OPT: fragile
+:END:
+
+Un *subobjeto clasificador* es un $\Omega$ con un monomorfismo $\mathrm{true} \colon 1 \to \Omega$
+tal que, para todo monomorfismo $m : \intr{\Gamma,P} \to \intr{\Gamma}$, existe un único $\chi$ tal
+que el siguiente diagrama es un producto fibrado.
+\[\begin{tikzcd}
+\intr{\Gamma , x : P}\rar{} \dar[swap, hook]{} & 
+1 \dar{\mathrm{true}} \\
+\intr{\Gamma} \rar[dashed]{\chi_P} & \Omega
+\end{tikzcd}\]
+Los tipos dados por un monomorfismo se llaman *proposiciones* y se
+pueden ver como elementos del tipo $\Omega$.
+\begin{prooftree}
+\AXC{$\Gamma \vdash P : \Omega$}
+\AXC{$\Gamma \vdash a : P$}
+\AXC{$\Gamma \vdash b : P$}
+\TIC{$\Gamma \vdash \mathrm{isProp}_P(a,b) : a = b$}
+\end{prooftree} 
+Además, mediante adjunciones hay formas de *truncar* cada tipo $A$ en
+una proposición $|A|$.
+
+* Matemática constructivista
+** Elementary Theory of the Category of Sets
+Con toda la estructura considerada podemos interpretar fundaciones
+categóricas de las matemáticas dentro de un lenguaje de
+programación. Un ejemplo es la *Elementary Theory of the Category of
+Sets* de W. Lawvere. Axiomas:
+
+ * una categoría localmente cartesiana cerrada con todos los límites
+   finitos, el álgebra inicial de $1 + X$ y un subobjeto clasificador
+   (un *topos con un objeto de números naturales*);
+
+ * *punteada*, para cada $f,g \colon A \to B$, hay igualdad $f = g$ si y sólo
+   si $f(a)=g(a)$ para cualquier $a \colon 1 \to A$;
+
+ * cumpliendo el *axioma de elección*, los morfismos sobreyectivos
+   en puntos tienen una sección.
+
+   \[
+   \left(\prod_{(a:A)} \left\|\sum_{(b : B)} f(b) = a \right\|\right) \to 
+   \left\| \sum_{(g : A \to B)}\prod_{(a:A)} f(g(a)) = a \right\|
+   \]
+
+** ETCS en agda
+#+latex: \begin{textblock*}{0cm}(-1cm,-4.90cm)
+#+latex: \includegraphics[keepaspectratio=true,width=1\paperwidth]{./images/agda-etcs.png}
+#+latex: \end{textblock*}
+
+** Elementary Theory of the Category of Sets: Diaconescu
+#+ATTR_LATEX: :options [Diaconescu]
+#+BEGIN_theorem
+El axioma de elección implica el tercio excluso.
+#+END_theorem
+#+BEGIN_proof
+Dada $P$, definimos $U = \left\{ x \in \left\{ 0,1 \right\} \mid (x = 0) \vee P\right\}$ y
+$V = \left\{ x \in \{0,1\} \mid (x = 1) \vee P \right\}$, cada no vacío.
+Por elección, existe $f \colon \left\{ U,V \right\} \to U \cup V$ tal que $f(U) \in U$ y $f(V) \in V$. 
+Decidimos si $f(U)$ y $f(V)$ son $0$ o no por inducción. Si $f(U) = 1$ o $f(V) = 0$,
+entonces $P$ es cierto; y si $f(U) = 0$ y además $f(V) = 1$, tendríamos
+$\neg P$, porque si $P$, entonces $U=V$, luego $0 = f(U) = f(V) = 1$.
+#+END_proof
+
+Así que al aceptar axioma de elección, hemos vuelto a la matemática
+clásica. Esto es una posible vía, pero no la única. 
+
+** Diaconescu en agda
+#+latex: \begin{textblock*}{0cm}(-1cm,-4.90cm)
+#+latex: \includegraphics[keepaspectratio=true,width=1\paperwidth]{./images/agda-diaconescu.png}
+#+latex: \end{textblock*}
+
+** Otros topoi
+Cada topos da un modelo de matemática constructivista.
+
+ * En el *topos de realizabilidad* de Hayland, toda función es computable
+   y podemos estudiar computabilidad sintética y realizabilidad de Kleene 
+   footfullcite:vanoosten08
+
+ * En el *topos de Dubuc* podemos formalizar los infinitesimales y hacer
+   geometría diferencial sintética.
+   footfullcite:dubuc89
+
+ * En el *topos topológico* de Johnstone, podemos razonar sobre espacios
+   y funciones continuas.
+   footfullcite:johnstone79
+
+Además, al aceptar tercio excluso perdemos la interpretación computacional
+de Brower-Heyting-Kolmogorov.
+
+** Reales en Agda
+#+latex: \begin{textblock*}{0cm}(-1cm,-4.90cm)
+#+latex: \includegraphics[keepaspectratio=true,width=1\paperwidth]{./images/agda-reals.png}
+#+latex: \end{textblock*}
+
+* Conclusiones
+** TODO Conclusiones
+Conclusiones
 * Local variables                                                                           :ignore:
 # Local Variables:
 # org-latex-pdf-process: ("xelatex --shell-escape -interaction nonstopmode %f" "bibtex %b" "xelatex --shell-escape -interaction nonstopmode %f")
