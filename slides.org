@@ -24,7 +24,7 @@
 *** Show notes on second screen                                                           :ignore:
 #+beamer_header: \usepackage{pgfpages}
 #+beamer_header: \setbeameroption{hide notes}
-#+beamer_header: \setbeameroption{show notes on second screen=right}
+#+beamer_header: %\setbeameroption{show notes on second screen=right}
 #+beamer_header: \setbeamertemplate{note page}{\pagecolor{yellow!5}\insertnote}
 
 **** Bug in pgfpages                                                                     :ignore:
